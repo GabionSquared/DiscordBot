@@ -5,7 +5,7 @@ from discord.ui import Button, View
 import random
 import re       #(regex)
 import gspread  #(for the spreadsheet)
-import asyncio  #(for doing literally anything)
+import asyncio  #(for doing shit)
 import datetime #(timers)
 from datetime import date
 from datetime import timedelta
@@ -19,23 +19,23 @@ gc = gspread.service_account('client_secret.json')
 sh = gc.open("Script Guild Spreadsheet")
 WORKSHEET = sh.get_worksheet(0)
 
-#THESE ARE FOR TWO DIFFERENT BOTS.
-#use pen_nemisis while doing dev so you dont have to stop the main bot while you're doing it
-DISCORD_TOKEN_PAL = "12345" #env is cringe
-DISCORD_TOKEN_NEM = "12345"
+DISCORD_TOKEN_PAL = "pal" #env is cringe
+DISCORD_TOKEN_NEM = "nem"
 
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix="~", intents=intents)
 
-#https://discordapp.com/oauth2/authorize?&client_id=682269398349774880&scope=bot
+
 
 GUILDID = 1099437324703633521 #script haven
 GUILD =  bot.get_guild(1099437324703633521)
 PEOPLE = {}
 CHANNELS = {}
 CHANNELS_AUDIOS = {}
+EVENT_CHANNELS = {}
+IMAGE_REACTS = {}
 CHANNELS_SCRIPTS = {}
 ROLES = {}
 SOCIALCREDITCOUNTER = [[-1, -1]]
@@ -104,6 +104,29 @@ async def CollectObjects():
     "fantasy-scifi-audios"        : bot.get_channel(1099443082795167764),
     }
 
+    global EVENT_CHANNELS
+    EVENT_CHANNELS = {
+    "janurary-newthings"          : bot.get_channel(1191086957846069339),
+    "feburary-valentine"          : bot.get_channel(1201942294585159710),
+    "march-monster"               : bot.get_channel(1213176910671257630),
+    "april-series"                : bot.get_channel(1224129788684538027),
+    "may-giveavoice"              : bot.get_channel(1102689072318795897),
+    "may-gaveavoice"              : bot.get_channel(1102689127113171044),
+    "june-pride"                  : bot.get_channel(1113841969811177614),
+    "july-collab"                 : bot.get_channel(1124512087335522334),
+    #algorithm august happens in #announcements
+    "september-vamonth"           : bot.get_channel(1147199808986157087),
+    "october-scriptober"          : bot.get_channel(1157616124301688852),
+    "november-notice"             : bot.get_channel(1169016316724776970),
+    "december-santa"              : bot.get_channel(1188481943101247669),
+    }
+
+    global IMAGE_REACTS
+    IMAGE_REACTS = {
+    "art"          : bot.get_channel(1099613674731229204),
+    "testing"      : bot.get_channel(1100164219057479680),
+    }
+
     global ROLES
     ROLES = {
     "R_Writer"   : discord.utils.get(GUILD.roles, id=1099446987557978122),
@@ -130,7 +153,9 @@ async def CollectObjects():
     "A_25-30" : discord.utils.get(GUILD.roles, id=1099706086426157056),
     "A_30-35" : discord.utils.get(GUILD.roles, id=1099706122983719043),
     "A_35-40" : discord.utils.get(GUILD.roles, id=1099706150464794744),
-    "A_40-99" : discord.utils.get(GUILD.roles, id=1099706182467334274)
+    "A_40-99" : discord.utils.get(GUILD.roles, id=1099706182467334274),
+
+    "Event" : discord.utils.get(GUILD.roles, id=1187173527590285374)
     }
 
     global COLOURROLES
@@ -198,14 +223,26 @@ async def on_ready():
     await bot.change_presence(status=discord.Status.idle, activity=game)
     await CollectObjects()
 
-    #for manually setting bits when things go wrong
-    """    
-    global SOCIALCREDITCOUNTER
-    SOCIALCREDITCOUNTER = 
-    
-    #for i in range(1, len(SOCIALCREDITCOUNTER)):
-    #    SOCIALCREDITCOUNTER[i][1] = SOCIALCREDITCOUNTER[i][1] * -1
 
+    channel = bot.get_channel(1099440044202274929)
+
+    #message = await channel.fetch_message(1244749040227192963)
+    #await message.reply("only if you love me too (platonically) uwu")
+
+    #with open("C:/Users/Timothy/Pictures/Screenshots/Screenshot 2024-05-07 231650.png", "rb") as file:
+    #    await message.reply("oui oui", file=discord.File(file))
+    #await channel.send("yup")
+
+    #for manually setting bits when things go wrong
+
+    """ 
+    global SOCIALCREDITCOUNTER
+    SOCIALCREDITCOUNTER =
+      
+    for i in range(1, len(SOCIALCREDITCOUNTER)):
+        SOCIALCREDITCOUNTER[i][1] = SOCIALCREDITCOUNTER[i][1] * -1
+
+    
     global MONEYCOUNTER
     MONEYCOUNTER = 
     """
@@ -224,6 +261,29 @@ async def UpdateClockMain():
         UpdateServerSocialCredit()
 
         await asyncio.sleep(MainUpdateTime)
+
+"""
+@bot.command(name = "help")
+async def hhelp(ctx):
+    print("\033[33m\tHelp:\033[0m")
+
+    string = (
+            "----CUSTOMISE YOURSELF!----\n"+
+            "~Roles \t| Set yourself as a Writer, VA, Listener and more!\n"+
+            "~Colours \t| Get yourself a colourful name\n"+
+            "~Randomise \t| if ~colours is too many choises for you\n"+
+            "----SOCIAL CREDIT!----\n"+
+            "~Social Credit \t| view your level, and how far you are to the next one!\n"+
+            "~Leaderboard \t| See the highest ranks on the server, and how you stack up!\n"+
+            "----OTHER UTILITIES----\n"+
+            "~Smallify \t| makes your message real small!\n"+
+            "~Convert \t| Quick Currency Conversions. Use like `~convert 10 GBP USD`.\n"
+            "--------------------"
+            "now tell ash to make this a proper menu"
+        )
+
+    await ctx.message.reply(string)
+"""
 
 @bot.command(name = "socialcredit", help = "dolla dolla dolla")
 async def PrintUserMoney(ctx):
@@ -322,18 +382,22 @@ async def PrintUserSocialCreditLeaderboard(ctx, length: int = 3):
     print("\033[33m\tLeaderboard:\033[0m")
 
     userID = ctx.author.id
-    if length > 10:
-        length = 10
-    if length < 3:
-        length = 3
+    #if length > 10:
+    #    length = 10
+    #if length < 3:
+    #     length = 3
 
-    ID_values_str = WORKSHEET.col_values("1")
-    SC_values_str = WORKSHEET.col_values("4")
+    data = WORKSHEET.get_all_values()
+
+    ID_values_str = [sub_array[0] for sub_array in data]
+    SC_values_str = [sub_array[3] for sub_array in data]
+
     outputString = ""
 
     All_SC_values = [int(x) for x in SC_values_str[1:]] #str -> int and trim title
     All_ID_values = [int(x) for x in ID_values_str[1:]] #str -> int and trim title
 
+    #adds the locally stored credit, to ensure the leaderboard is always accurate
     for i in range(1, len(SOCIALCREDITCOUNTER)):
         try:
             index = All_ID_values.index(SOCIALCREDITCOUNTER[i][0])
@@ -345,9 +409,9 @@ async def PrintUserSocialCreditLeaderboard(ctx, length: int = 3):
 
 
     #thanks chatgpt (sortin shit)
-    sorted_indices = sorted(range(len(All_SC_values)), key=lambda i: All_SC_values[i], reverse=True)
+    sorted_indices = sorted(range(len(All_SC_values)), key=lambda x: All_SC_values[x], reverse=True)
 
-    #user-specific bits
+    #bits to do with the user themselves
     CreditSpot = All_SC_values.index(usersocialcredit(ctx.author.id))
     CallerRank = sorted_indices.index(CreditSpot)+1
     print(f"\033[33m\tCaller is Rank {CallerRank}\n\033[0m")
@@ -369,10 +433,10 @@ async def PrintUserSocialCreditLeaderboard(ctx, length: int = 3):
         level = math.floor((-1 + math.sqrt(1 + 8 * credit)) / 2) 
         return level
 
-    for i in range (1, length+1): #the first one is the title
-        row = sorted_indices[i-1]+2 #i have genuinly no idea why it needs an offset of 2. 1 indexed + title?
+    for i in range (0, length):
+        row = sorted_indices[i]+1 # +1 for the titles
 
-        cell_values = WORKSHEET.row_values(row)[0:4]
+        cell_values = data[row][0:4]
         #['944670449588133950', 'behawth', 'PositiviBee']
 
         print(f"\033[33m\t {i} : {cell_values}\033[0m")
@@ -382,7 +446,7 @@ async def PrintUserSocialCreditLeaderboard(ctx, length: int = 3):
         if name == '':
             name = cell_values[1]
         
-        outputString += ("Rank " + str(i) + ": " + name + ", level " + str(levelCheck(int(cell_values[0]),int(cell_values[3]))) + "\n")
+        outputString += ("Rank " + str(i+1) + ": " + name + ", level " + str(levelCheck(int(cell_values[0]),int(cell_values[3]))) + "\n")
 
     await ctx.message.reply(outputString)        
 
@@ -426,6 +490,7 @@ async def create_button_roles(ctx):
     button3_editor = Button(style=discord.ButtonStyle.blurple, label=f"Editor 💻",   custom_id="editor")
     button4_artist = Button(style=discord.ButtonStyle.blurple, label=f"Artist 🎨",   custom_id="artist")
     button5_listen = Button(style=discord.ButtonStyle.blurple, label=f"Listener 🎧", custom_id="listen")
+    button6_eventt = Button(style=discord.ButtonStyle.blurple, label=f"Event 🎉",    custom_id="event")
 
     async def button_vaaaaa(interaction: discord.Interaction):
         if ROLES["R_VA"] in interaction.user.roles:
@@ -479,12 +544,23 @@ async def create_button_roles(ctx):
             await interaction.response.send_message("Added Listener Role", delete_after = deleteTimer)
             print(f"\033[33m\nAdded [R_Listener] From {interaction.user.nick}\033[0m")
 
+    async def button_eventt(interaction: discord.Interaction):
+        if ROLES["Event"] in interaction.user.roles:
+            await interaction.user.remove_roles(ROLES["Event"])
+            await interaction.response.send_message("Removed Event Role", delete_after = deleteTimer)
+            print(f"\033[33m\nRemoved [Event] From {interaction.user.nick}\033[0m")
+        else:
+            await interaction.user.add_roles(ROLES["Event"])
+            await interaction.response.send_message("Added Event Role", delete_after = deleteTimer)
+            print(f"\033[33m\nAdded [Event] From {interaction.user.nick}\033[0m")
+
     view = View()
     view.add_item(button1_vaaaaa)
     view.add_item(button2_writer)
     view.add_item(button3_editor)
     view.add_item(button4_artist)
     view.add_item(button5_listen)
+    view.add_item(button6_eventt)
     view.timeout = None
 
     await ctx.send("Give yourself some roles!\n(Clicking one you already have will remove it)", view=view)
@@ -495,6 +571,7 @@ async def create_button_roles(ctx):
     button3_editor.callback = button_editor
     button4_artist.callback = button_artist
     button5_listen.callback = button_listen
+    button6_eventt.callback = button_eventt
 
 #region the great reacting
 
@@ -508,15 +585,20 @@ async def react(ctx):
     #    if(re.search(pattern, message.content)):
     #        await message.add_reaction("\u2B50")
     #
-
+    """
     for channel in CHANNELS_AUDIOS.values():
-        print(channel.name)
         print(f"\033[33m\t{channel.name}\033[0m")
         async for message in channel.history(limit=None):
             if(re.search(pattern, message.content)):
                 await message.add_reaction("\u2B50")
 
     for channel in CHANNELS_SCRIPTS.values():
+        print(f"\033[33m\t{channel.name}\033[0m")
+        async for message in channel.history(limit=None):
+            if(re.search(pattern, message.content)):
+                await message.add_reaction("\u2B50")
+    """
+    for channel in EVENT_CHANNELS.values():
         print(f"\033[33m\t{channel.name}\033[0m")
         async for message in channel.history(limit=None):
             if(re.search(pattern, message.content)):
@@ -553,6 +635,28 @@ async def reactSpecific(ctx, channelid, messageid):
 
     await message.add_reaction("\u2B50")
 
+@bot.command(name = "snap", hidden=True)
+async def snap(ctx):
+    regular = bot.get_channel(1099623469316055141)
+    _18p = bot.get_channel(1161784982545629316)
+
+
+    async for message in regular.history(limit=None):
+        if((message.author.id == 1064848098607759420) or  (message.author.id == 1193314194049728512)):
+            await message.delete()
+            print("deleted")
+            await asyncio.sleep(0.6)
+
+    async for message in _18p.history(limit=None):
+        if((message.author.id == 1064848098607759420) or  (message.author.id == 1193314194049728512)):
+            await message.delete()
+            print("deleted")
+            await asyncio.sleep(0.6)
+    print("fin.")
+
+@bot.command(name = "delete", hidden=True)
+async def delete(ctx):
+    await ctx.message.delete()
 #endregion
 
 #region colours
@@ -810,12 +914,18 @@ async def on_message(message): #this should be ONLY the "every message" shit
         return
 
     #region reacting
-    if(message.channel in CHANNELS_SCRIPTS.values() or message.channel in CHANNELS_AUDIOS.values()):
+    if(message.channel in CHANNELS_SCRIPTS.values() or message.channel in CHANNELS_AUDIOS.values() or message.channel in EVENT_CHANNELS.values() or message.channel in IMAGE_REACTS.values()):
         pattern = r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+" #has a url
-        if(re.search(pattern, message.content)):
+        if(re.search(pattern, message.content) and ("tenor" not in message.content)):
             await message.add_reaction("\u2B50")
             print(f"\033[33m\tAdded Star Reaction\033[0m")
 
+    if(message.channel in IMAGE_REACTS.values()):
+        if message.attachments:
+            for attachment in message.attachments:
+                if (attachment.filename.lower().endswith(('.png', '.jpg', '.jpeg')) and ("tenor" not in attachment.filename.lower())):
+                    await message.add_reaction("\u2B50")
+                    print(f"\033[33m\tAdded Star Reaction\033[0m")
 
     if(message.channel == CHANNELS["Furnace"] and message.author != 682269398349774880): #the bot, so it doesnt delete the furnace image
         await F_begin()
@@ -856,6 +966,14 @@ async def on_message(message): #this should be ONLY the "every message" shit
     if txt.startswith('le pong'):
         print("\033[33m\tPing:\033[0m")
         await message.channel.send("le ping")
+
+    if txt.startswith('silly'):
+        print("\033[33m\tPing:\033[0m")
+        await message.channel.send("goose")
+
+    if txt.startswith('goose'):
+        print("\033[33m\tPing:\033[0m")
+        await message.channel.send("silly?")    
     #endregion
 
     await bot.process_commands(message)
@@ -1197,10 +1315,13 @@ async def Flip(ctx, headsOrTails, betValue):
     reward = math.floor(betValue*BETTINGREWARD)
     
     #0 is heads, 1 is tails
-    WantHeads = 1 if headsOrTails in heads == None else 0
+    WantHeads = 1
+    if (headsOrTails in heads):
+        WantHeads = 0
+
     roll = random.randint(0,1)
     userWin = roll == WantHeads
-    print(f"\033[33m\tuser wants {'tails' if WantHeads == 1 else 'heads'}, rolled {'tails' if roll == 1 else 'heads'}\033[0m")
+    print(f"\033[33m\tuser wants {WantHeads}, rolled {roll}\033[0m")
     print(f"\033[33m\tpaid {betValue}, reward is {reward} on {BETTINGREWARD} multiplier ({betValue+reward} pot)\033[0m")
 
     if(userWin):
